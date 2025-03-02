@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 
 from app.routes import items
 from app.database.mongodb import close_mongo_connection, connect_to_mongo
+from app.middleware.logging import log_request_middleware
 
 # Load environment variables
 load_dotenv()
@@ -23,6 +24,7 @@ origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "https://debot.deterbrown.com",
+    "https://debot.lndo.site",
 ]
 
 app.add_middleware(
@@ -32,6 +34,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add logging middleware
+app.middleware("http")(log_request_middleware)
 
 # Database events
 app.add_event_handler("startup", connect_to_mongo)

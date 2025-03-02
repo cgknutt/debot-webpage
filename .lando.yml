@@ -1,0 +1,66 @@
+name: debot
+recipe: lamp
+config:
+  webroot: .
+  php: false
+  via: nginx
+
+services:
+  # Frontend Vue.js service
+  frontend:
+    type: node:18
+    port: 3000
+    command: cd /app/frontend && npm run dev
+    build:
+      - cd /app/frontend && npm install
+    ssl: true
+
+  # Backend FastAPI service
+  backend:
+    type: python:3.10
+    port: 8000
+    command: cd /app/backend && python run.py
+    build:
+      - cd /app/backend && pip install -r requirements.txt
+    ssl: true
+    
+  # MongoDB service
+  database:
+    type: mongo:4.4
+    portforward: 27017
+
+  # MongoDB Web UI
+  mongo-express:
+    type: compose
+    ssl: true
+    services:
+      image: mongo-express:latest
+      depends_on:
+        - database
+      environment:
+        ME_CONFIG_MONGODB_SERVER: database
+        ME_CONFIG_MONGODB_PORT: 27017
+        ME_CONFIG_BASICAUTH_USERNAME: admin
+        ME_CONFIG_BASICAUTH_PASSWORD: admin
+      ports:
+        - '8081:8081'
+
+proxy:
+  frontend:
+    - debot.lndo.site:3000
+  
+  backend:
+    - api.debot.lndo.site:8000
+
+  mongo-express:
+    - mongo.debot.lndo.site:8081
+
+tooling:
+  npm:
+    service: frontend
+  python:
+    service: backend
+  pip:
+    service: backend
+  mongo:
+    service: database 
