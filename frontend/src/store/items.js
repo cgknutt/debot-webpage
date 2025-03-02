@@ -1,6 +1,14 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
 
+// Create a base API instance with relative URL
+const api = axios.create({
+  baseURL: '/api',
+  headers: {
+    'Content-Type': 'application/json'
+  }
+})
+
 export const useItemsStore = defineStore('items', {
   state: () => ({
     items: [],
@@ -14,7 +22,8 @@ export const useItemsStore = defineStore('items', {
       this.error = null
       
       try {
-        const response = await axios.get('/api/items')
+        // Use the api instance with relative path and trailing slash
+        const response = await api.get('/items/')
         this.items = response.data
       } catch (err) {
         this.error = err.message || 'Failed to fetch items'
@@ -28,9 +37,16 @@ export const useItemsStore = defineStore('items', {
       this.loading = true
       this.error = null
       
+      // Generate a unique ID if not provided
+      if (!item.id) {
+        item.id = 'frontend-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9)
+      }
+      
       try {
-        const response = await axios.post('/api/items', item)
-        this.items.push(response.data)
+        // Use the api instance with relative path and trailing slash
+        const response = await api.post('/items/', item)
+        // Add the new item to the beginning of the array
+        this.items.unshift(response.data)
         return response.data
       } catch (err) {
         this.error = err.message || 'Failed to add item'

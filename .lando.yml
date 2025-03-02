@@ -1,63 +1,55 @@
 name: debot
-recipe: lamp
-config:
-  webroot: .
-  php: false
-  via: nginx
 
 services:
   # Frontend Vue.js service
   frontend:
     type: node:18
-    port: 3000
-    command: cd /app/frontend && npm run dev
+    port: 5173
+    portforward: true  # This allows direct access
+    command: cd /app/frontend && yarn dev --host 0.0.0.0
     build:
-      - cd /app/frontend && npm install
+      - cd /app/frontend && yarn install
     ssl: true
+    environment:
+      NODE_ENV: development
+      LANDO: ON
+      # No need for explicit VITE_API_URL as we're using relative URLs now
 
   # Backend FastAPI service
   backend:
     type: python:3.10
     port: 8000
+    portforward: true  # This allows direct access
     command: cd /app/backend && python run.py
     build:
       - cd /app/backend && pip install -r requirements.txt
     ssl: true
     
-  # MongoDB service
+  # MongoDB service with explicit ARM64 image
   database:
-    type: mongo:4.4
-    portforward: 27017
-
-  # MongoDB Web UI
-  mongo-express:
     type: compose
-    ssl: true
     services:
-      image: mongo-express:latest
-      depends_on:
-        - database
-      environment:
-        ME_CONFIG_MONGODB_SERVER: database
-        ME_CONFIG_MONGODB_PORT: 27017
-        ME_CONFIG_BASICAUTH_USERNAME: admin
-        ME_CONFIG_BASICAUTH_PASSWORD: admin
+      image: arm64v8/mongo:4.4
+      command: ["mongod", "--bind_ip_all"]
       ports:
-        - '8081:8081'
+        - "27017:27017"
 
 proxy:
   frontend:
-    - debot.lndo.site:3000
+    - frontend.debot.lndo.site
+    - debot.lndo.site
   
   backend:
-    - api.debot.lndo.site:8000
-
-  mongo-express:
-    - mongo.debot.lndo.site:8081
+    - api.debot.lndo.site
+    - api-debot.lndo.site
 
 tooling:
   npm:
     service: frontend
+    description: Run npm commands in the frontend service
+  yarn:
+    service: frontend
+    description: Run yarn commands in the frontend service
   python:
     service: backend
   pip:

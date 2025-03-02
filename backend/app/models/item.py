@@ -6,6 +6,7 @@ from datetime import datetime
 class ItemBase(BaseModel):
     """Base model for item data"""
     text: str = Field(..., min_length=1, max_length=500)
+    id: Optional[str] = None
 
 
 class ItemCreate(ItemBase):

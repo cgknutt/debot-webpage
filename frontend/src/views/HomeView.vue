@@ -32,7 +32,10 @@
     </div>
     <ul v-else class="items-list">
       <li v-for="item in itemsStore.items" :key="item._id" class="item">
-        {{ item.text }}
+        <div>
+          <div class="item-text">{{ item.text }}</div>
+          <div class="item-id" title="Item ID">ID: {{ item.id || 'None' }}</div>
+        </div>
         <span class="timestamp">Created: {{ new Date(item.created_at).toLocaleString() }}</span>
       </li>
     </ul>
@@ -54,7 +57,10 @@ const submitItem = async () => {
   if (!newItem.value.trim()) return
 
   try {
-    await itemsStore.addItem({ text: newItem.value.trim() })
+    await itemsStore.addItem({ 
+      text: newItem.value.trim(),
+      id: 'item-' + Date.now()  // Generate an ID based on timestamp
+    })
     newItem.value = '' // Clear the input after successful submission
   } catch (error) {
     // Error is already handled in the store
@@ -123,11 +129,22 @@ const submitItem = async () => {
   border-bottom: 1px solid #eee;
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
 }
 
 .item:last-child {
   border-bottom: none;
+}
+
+.item-text {
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.item-id {
+  font-size: 0.75rem;
+  color: #999;
+  font-family: monospace;
 }
 
 .timestamp {
