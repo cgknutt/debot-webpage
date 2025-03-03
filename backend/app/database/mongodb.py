@@ -5,16 +5,34 @@ from dotenv import load_dotenv
 from pymongo import MongoClient
 from pymongo.database import Database
 
+# Add debug information about current directory
+print(f"🔍 Current working directory: {os.getcwd()}")
+
 # Load environment variables from .env.local first if it exists, fall back to .env
-if os.path.exists(os.path.join(os.getcwd(), '.env.local')):
-    load_dotenv(os.path.join(os.getcwd(), '.env.local'))
+env_local_path = os.path.join(os.getcwd(), '.env.local')
+env_path = os.path.join(os.getcwd(), '.env')
+
+print(f"🔍 Checking for .env.local at: {env_local_path}")
+print(f"🔍 Checking for .env at: {env_path}")
+
+if os.path.exists(env_local_path):
+    print(f"🔍 Loading environment from: {env_local_path}")
+    load_dotenv(env_local_path)
 else:
-    load_dotenv()
+    print(f"🔍 Loading environment from: {env_path}")
+    load_dotenv(env_path)
+
+# Print all environment variables for debugging
+print(f"🔍 MONGO_URI from env: {os.getenv('MONGO_URI')}")
+print(f"🔍 MONGO_DB from env: {os.getenv('MONGO_DB')}")
 
 # Determine the correct MongoDB URI based on environment
-# In Lando/Docker, use 'database' as the hostname
-# When running directly with uvicorn, use 'localhost'
-if 'uvicorn' in sys.argv[0]:
+# Check if MONGO_URI is provided in .env file - this takes priority (for MongoDB Atlas)
+if os.getenv("MONGO_URI"):
+    MONGO_URI = os.getenv("MONGO_URI")
+    print("🌩️ Using MongoDB URI from environment: MongoDB Atlas")
+# Otherwise, determine based on runtime environment
+elif 'uvicorn' in sys.argv[0]:
     # Running directly with Uvicorn - use localhost
     MONGO_URI = "mongodb://localhost:27017"
     print("⚠️ Development mode detected! Using localhost for MongoDB connection")
@@ -25,7 +43,8 @@ else:
 
 MONGO_DB = os.getenv("MONGO_DB", "debot")
 
-print(f"🔌 Configured MongoDB URI: {MONGO_URI}")
+print(f"🔌 Configured MongoDB URI: {MONGO_URI.split('@')[0].replace('mongodb+srv://', '').replace('mongodb://', '')}{'@' + MONGO_URI.split('@')[1] if '@' in MONGO_URI else ''}")
+print(f"🔌 Full MongoDB URI being used: {MONGO_URI}")
 
 # Global variables for MongoDB connection
 mongo_client: Optional[MongoClient] = None
@@ -41,7 +60,7 @@ async def connect_to_mongo():
         
         # Ping the database to check the connection
         mongo_client.admin.command('ping')
-        print(f"✅ Connected to MongoDB at {MONGO_URI}, using database {MONGO_DB}")
+        print(f"✅ Connected to MongoDB at {MONGO_URI.split('@')[0].replace('mongodb+srv://', '').replace('mongodb://', '')}{'@' + MONGO_URI.split('@')[1] if '@' in MONGO_URI else ''}, using database {MONGO_DB}")
     except Exception as e:
         print(f"❌ Error connecting to MongoDB: {e}")
         raise
