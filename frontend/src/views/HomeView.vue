@@ -34,7 +34,7 @@
       <li v-for="item in itemsStore.items" :key="item._id" class="item">
         <div>
           <div class="item-text">{{ item.text }}</div>
-          <div class="item-id" title="Item ID">ID: {{ item.id || 'None' }}</div>
+          <div class="item-id" title="MongoDB ID">ID: {{ item._id }}</div>
         </div>
         <span class="timestamp">Created: {{ new Date(item.created_at).toLocaleString() }}</span>
       </li>
@@ -58,8 +58,8 @@ const submitItem = async () => {
 
   try {
     await itemsStore.addItem({ 
-      text: newItem.value.trim(),
-      id: 'item-' + Date.now()  // Generate an ID based on timestamp
+      text: newItem.value.trim()
+      // No ID needed - MongoDB will generate it
     })
     newItem.value = '' // Clear the input after successful submission
   } catch (error) {

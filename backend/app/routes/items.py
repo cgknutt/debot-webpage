@@ -19,7 +19,6 @@ def serialize_item(item):
     return {
         "_id": str(item["_id"]),
         "text": item["text"],
-        "id": item.get("id"),
         "created_at": item["created_at"],
         "updated_at": item.get("updated_at")
     }
@@ -43,10 +42,6 @@ async def create_item(item: ItemCreate):
         "created_at": datetime.utcnow(),
     }
     
-    # Add the id field if provided in the request
-    if item.id:
-        new_item["id"] = item.id
-    
     result = db.items.insert_one(new_item)
     
     # Get the created item
@@ -60,15 +55,11 @@ async def read_item(item_id: str):
     """Get a specific item by ID"""
     db = get_database()
     
-    # First try to find the item by custom id field
-    item = db.items.find_one({"id": item_id})
-    
-    # If not found by custom id, try to find by ObjectId
-    if item is None:
-        try:
-            item = db.items.find_one({"_id": ObjectId(item_id)})
-        except InvalidId:
-            raise HTTPException(status_code=400, detail="Invalid item ID format")
+    # Try to find by ObjectId
+    try:
+        item = db.items.find_one({"_id": ObjectId(item_id)})
+    except InvalidId:
+        raise HTTPException(status_code=400, detail="Invalid item ID format")
     
     if item is None:
         raise HTTPException(status_code=404, detail="Item not found")

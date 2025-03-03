@@ -37,14 +37,13 @@ export const useItemsStore = defineStore('items', {
       this.loading = true
       this.error = null
       
-      // Generate a unique ID if not provided
-      if (!item.id) {
-        item.id = 'frontend-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9)
-      }
+      // We don't need to generate an ID anymore, as the backend will handle this
+      // Just send the text directly
+      const itemData = { text: item.text }
       
       try {
         // Use the api instance with relative path and trailing slash
-        const response = await api.post('/items/', item)
+        const response = await api.post('/items/', itemData)
         // Add the new item to the beginning of the array
         this.items.unshift(response.data)
         return response.data
